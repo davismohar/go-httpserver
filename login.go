@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -38,8 +40,29 @@ func (db *DatabaseHandler) postLoginHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	//TODO: Generate a JWT and send to user
+	now := time.Now().Unix()
+	expires := now + 3600
+	claims := jwtClaims{
+		Username: username,
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt:  now,
+			ExpiresAt: expires,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSigningKey)
+	if err != nil {
+		http.Error(w, "Internal Server Error: Generating JWT Failed", http.StatusInternalServerError)
+	}
+	var cookie http.Cookie
+	cookie.Name = "auth-token"
+	cookie.Value = tokenString
+	cookie.Path = "/private"
+
+	http.SetCookie(w, &cookie)
+
 	//Redirect to the private homepage
-	http.Redirect(w, r, "/private/privatehome.html", http.StatusSeeOther)
+	fmt.Fprintf(w, "<p>Login sucessful.\n<a href=\"/private/privatehome.html\">Private Home</a></p>")
 }
 
 //adds a new user to the database, if it does not already exist
@@ -63,11 +86,7 @@ func (db *DatabaseHandler) postCreateAccountHandler(w http.ResponseWriter, r *ht
 
 	_, err = stmt.Exec(username, passwordHash)
 	if err != nil {
-		if err.Code == 19 {
-			http.Error(w, "Internal Server Error: Account Already Exists", http.StatusInternalServerError)
-		} else {
-			http.Error(w, "Internal Server Error: SQL Exec Failed", http.StatusInternalServerError)
-		}
+		http.Error(w, "Internal Server Error: Account Already Exists", http.StatusInternalServerError)
 	}
 
 	http.Redirect(w, r, "login.html", http.StatusSeeOther)

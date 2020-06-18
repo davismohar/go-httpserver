@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 //Handles all requests receieved by the webserver
@@ -39,9 +42,25 @@ func getFileRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	//check if we are trying to access a file in the private directory
 	if strings.Contains(r.URL.Path, "private/") {
-		//TODO: JWT Token authentication
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
+		//check for valid JWT
+		//get cookie string
+		cookie, err := r.Cookie("auth-token")
+		if err != nil || cookie == nil {
+			http.Error(w, "Forbidden, auth token not found", http.StatusForbidden)
+			return
+		}
+		tokenString := cookie.Value
+		// Parse the token
+		token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (interface{}, error) {
+			// since we only use the one private key to sign the tokens,
+			// we also only use its public counter part to verify
+			return jwtSigningKey, nil
+		})
+		claims := token.Claims.(*jwtClaims)
+		if claims.StandardClaims.ExpiresAt < time.Now().Unix() {
+			http.Error(w, "Forbidden. Token Expired", http.StatusForbidden)
+			return
+		}
 	}
 
 	//Send file contents, if it exists
