@@ -4,7 +4,7 @@ Basic multithreaded http server implemented in go.
 User accounts are stored in a SQLite database. When a user logs in, they are issued a JWT (Javascript Web Token).
 Any requests to access any files within the private/ directory require the user to present a valid JWT token.
 
-Directory layout:  
+Template directory layout:  
 server-root/  
 &nbsp;&nbsp;&nbsp;&nbsp;index.html  
 &nbsp;&nbsp;&nbsp;&nbsp;login.html  
