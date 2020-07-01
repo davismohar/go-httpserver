@@ -23,9 +23,6 @@ func (db *DatabaseHandler) postLoginHandler(w http.ResponseWriter, r *http.Reque
 	}
 	//query database for the given information
 	fmt.Printf("Querying for user %v with password hash %v\n", username, passwordHash)
-	// var sb strings.Builder
-	// sb.WriteString("SELECT * FROM users WHERE username = \'")
-	// sb.WriteString(username)
 	queryString := fmt.Sprintf("SELECT * FROM users WHERE username = '%v' AND password = '%v'", username, passwordHash)
 	rows, err := db.database.Query(queryString)
 	if err != nil {
@@ -39,7 +36,7 @@ func (db *DatabaseHandler) postLoginHandler(w http.ResponseWriter, r *http.Reque
 		http.Redirect(w, r, "index.html", http.StatusSeeOther)
 	}
 
-	//TODO: Generate a JWT and send to user
+	//Generate a JWT and send to user
 	now := time.Now().Unix()
 	expires := now + 3600
 	claims := jwtClaims{
@@ -78,7 +75,7 @@ func (db *DatabaseHandler) postCreateAccountHandler(w http.ResponseWriter, r *ht
 		http.Error(w, "Internal Server Error: Hash Failed", http.StatusInternalServerError)
 	}
 	fmt.Printf("Adding user %v with password %v", username, passwordHash)
-
+	//adds entry into database with their username and password hash
 	stmt, err := db.database.Prepare("INSERT INTO users (username, password) VALUES  ( ?, ? )")
 	if err != nil {
 		http.Error(w, "Internal Server Error: SQL Statement Preparation Failed", http.StatusInternalServerError)

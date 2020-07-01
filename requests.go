@@ -15,8 +15,6 @@ func (db *DatabaseHandler) handler(w http.ResponseWriter, r *http.Request) {
 	//If we have a GET request, serve a file in the server-root directory
 	fmt.Printf("Recieved connection from %s\n", r.RemoteAddr)
 	if r.Method == "GET" {
-		//TODO: check for GET/data calls to access db
-		//TODO: check for GET/api calls to login
 		getFileRequestHandler(w, r)
 	} else if r.Method == "POST" {
 		if r.URL.Path == "/api/login" {
@@ -31,7 +29,7 @@ func (db *DatabaseHandler) handler(w http.ResponseWriter, r *http.Request) {
 
 /**
 * Handles all GET requests for files.
-* TODO: Check for JWT token for access to private dir
+* Checks for JWT token for access to private dir
 **/
 func getFileRequestHandler(w http.ResponseWriter, r *http.Request) {
 	//check for illegal directory access (../)
